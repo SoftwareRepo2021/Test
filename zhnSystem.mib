@@ -1,0 +1,1143 @@
+
+-- Copyright (C) 2008-2009 by Zhone Technologies.  All Rights Reserved.
+
+-- ======================================================================
+-- ==                                                                  ==
+-- ==                    ZHNSYSTEM MIB                                ==
+-- ==                                                                  ==
+-- ==  Copyright (C) 2008-2009 Zhone Technologies, Inc.                     ==
+-- ==  Confidential, Unpublished Property of Zhone Technologies.       ==
+-- ==  Rights Reserved Under the Copyright Laws of the United States.  ==
+-- ==                                                                  ==
+-- ======================================================================
+
+ZHNSYSTEM DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY , OBJECT-TYPE , enterprises,
+    Integer32, Unsigned32, IpAddress
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    TEXTUAL-CONVENTION, DisplayString, MacAddress, RowStatus
+        FROM SNMPv2-TC
+    zhoneWtn
+        FROM Zhone;
+
+
+zhnSystem  MODULE-IDENTITY
+    LAST-UPDATED  "200905200000Z" -- May 20, 2009
+    ORGANIZATION "Zhone Technologies
+                  MIB Working Group
+                  Other information about group editing the MIB"
+    CONTACT-INFO "Zhone Technologies, Inc.
+                  Florida Design Center
+                  8545 126th Avenue North
+                  Largo, FL 33773
+                  www.zhone.com
+
+                  General Comments to: largo-mibwg-team@zhone.com"
+
+    DESCRIPTION
+        "This file defines the private Enterprise MIB extensions
+         that define system related objects. 
+
+         ==============================================================
+         ==                                                          ==
+         ==      Copyright (C) 2008-2009 Zhone Technologies, Inc.    ==
+         ==                                                          ==
+         =============================================================="
+
+    REVISION "200905200000Z"  -- May 20, 2009
+    DESCRIPTION "General MIB file cleanup. Also added not-applicable values 
+    to some of the textual convention objects."
+    REVISION "200808250000Z"  -- Aug 25, 2008
+    DESCRIPTION "Added Pseudo-Wire Emulation (PWE) System Timing objects."
+    REVISION "200711260000Z"  -- Nov 26, 2007
+    DESCRIPTION "Added Trap Manager Table, Community String Table, 
+                 sysLocation and sysContact objects."
+    REVISION "200703150000Z"  -- March 15, 2007
+    DESCRIPTION "Added GPS location objects."
+    REVISION "200610170000Z"
+    DESCRIPTION "First Draft"
+
+::= { zhoneWtn 2 }
+
+
+zhnSystemObjects OBJECT IDENTIFIER ::= {zhnSystem 1}
+
+zhnSystemGeneralObjects           OBJECT IDENTIFIER ::= { zhnSystemObjects 1 }
+zhnSystemBoardObjects             OBJECT IDENTIFIER ::= { zhnSystemObjects 2 }
+zhnSystemPldObjects               OBJECT IDENTIFIER ::= { zhnSystemObjects 3 }
+zhnSystemRadioObjects             OBJECT IDENTIFIER ::= { zhnSystemObjects 4 }
+zhnSystemEthernetLikeObjects      OBJECT IDENTIFIER ::= { zhnSystemObjects 5 }
+zhnSystemTempSensorObjects        OBJECT IDENTIFIER ::= { zhnSystemObjects 6 }
+zhnSystemSNMPObjects              OBJECT IDENTIFIER ::= { zhnSystemObjects 7 }
+zhnSystemTrapObjects              OBJECT IDENTIFIER ::= { zhnSystemObjects 8 }
+
+
+-- ****************************************************************************
+--
+-- Textual Conventions
+--
+
+WFNT ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "The Wifi Network Type"
+  SYNTAX        INTEGER {
+                  notApplicable(0),   -- Not Applicable
+                  baseStation(1),     -- BaseStation 
+                  mesh(2)             -- Mesh unit 
+                }
+
+ELTYPE ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Ethernet Like Interface Type"
+  SYNTAX        INTEGER {
+                  ethernet(1),     -- Real Ethernet interface
+                  efm(2),          -- Ethernet First Mile
+                  shdsl(3),        -- Ethernet Over Shdsl
+                  docsis(4),       -- 
+                  wimax(5)         -- 
+                }
+
+ELSUBTYPE ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Ethernet Like Interface Sub-Type"
+  SYNTAX        INTEGER {
+                  none(0)     -- No Subtype defined for this Type
+                }
+LPT ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Line Power Direction"
+  SYNTAX        INTEGER {
+                  none(0),   -- None
+                  in(1),     -- Power coming into interface
+                  out(2)     -- Power provided to interface
+                }
+
+UPT ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Unit Power Supply Type"
+  SYNTAX        INTEGER {
+                  ac(1),     -- Alternating Current
+                  dc(2)      -- Direct Current
+                }
+
+TCSI ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Transmit Clock Source Items"
+  SYNTAX        INTEGER {
+                  notApplicable(0),   -- Not Applicable
+                  loop(1),    -- Receive clock used a transmit clock
+                  local(2),   -- Local clock source used a transmit clock
+                  pwe(3)      -- Clock recovered from Data flow
+                }
+
+LTRI ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Local Timing Reference Items"
+  SYNTAX        INTEGER {
+                  notApplicable(0), -- Not Applicable
+                  ethernet(1),    -- Use SyncE 25MHz clock
+                  internal(2),    -- Use internal oscillator
+                  shdsl(3)        -- Use 8KHz SHDSL clock (CPE only)
+                }
+
+CSMI ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Clock Synchronization Mode Items"
+  SYNTAX        INTEGER {
+                  notApplicable(0), -- Not Applicable
+                  adaptive(1),      -- Adaptive Timing Mode
+                  differential(2),  -- Differential Timing Mode
+                  synchronous(3),   -- SHDSL Synch Timing Mode
+                  DSLadaptive(4)    -- Adaptive DSL Timing Mode
+                }
+
+SEI ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Synchronous Ethernet Items"
+  SYNTAX        INTEGER {
+                  enable(1),
+                  disable(2)
+                }
+
+CMI ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Clock Mode Items"
+  SYNTAX        INTEGER {
+                  notApplicable(0), -- Not Applicable
+                  normal(1),        -- Adaptive/Synch Timing Mode
+                  differential(2)   -- Differential Timing Mode
+                }
+
+CDA ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Configuration Database Action"
+  SYNTAX        INTEGER {
+                  noAction(0),        -- No Action
+                  save(1),            -- Save current settings to database
+                  resetToDefaults(2)  -- Reset database to factory defaults and reboot
+                }
+
+RBT ::= TEXTUAL-CONVENTION
+  STATUS        current
+  DESCRIPTION   "Software Reboot Action"
+  SYNTAX        INTEGER {
+                  noAction(0),        -- No Action
+                  reboot(1)           -- Software reboot
+                }
+
+
+-- ****************************************************************************
+--
+-- System General Objects
+--
+
+-- read only system info
+
+modelNumber OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+         "model no. of the device"
+  ::= { zhnSystemGeneralObjects 1}
+
+macBaseAddress OBJECT-TYPE
+  SYNTAX        MacAddress
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+         "First MAC Address in series"
+  ::= { zhnSystemGeneralObjects 2}
+
+numberOfMacAddresses OBJECT-TYPE
+  SYNTAX        Unsigned32(0..10)
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+         "Number of MAC Address sequentially defined in the Unit starting
+          at the MAC Base Address."
+  ::= { zhnSystemGeneralObjects 3}
+
+
+-- read-write system info
+
+wifiNetworkType OBJECT-TYPE
+  SYNTAX        WFNT
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION
+    "Defines the Network Type or Mode of the Unit, i.e. Mesh or Base Station"
+  ::= { zhnSystemGeneralObjects 4}
+
+locationLatitude OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION
+    "The latitude of the unit's location represented in degrees decimal.
+     The format of the location's latitude is:
+
+       [+ | -]ddd.dddddddd
+
+     where + indicates north
+           - indicates south
+           d is a decimal digit (0 <= d <= 9)
+
+     Valid range is -90 to +90 degrees."
+  ::= { zhnSystemGeneralObjects 6 }
+
+locationLongitude OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION
+    "The longitude of the unit's location represented in degrees decimal.
+     The format of the location's longitude is:
+
+       [+ | -]ddd.dddddddd
+
+     where + indicates east
+           - indicates west
+           d is a decimal digit (0 <= d <= 9)
+
+     Valid range is -180 to +180 degrees."
+  ::= { zhnSystemGeneralObjects 7 }
+
+
+-- action parameter: needed for setting above scalars in dal_set requests
+
+zhnSystemAction OBJECT-TYPE
+  SYNTAX        RowStatus
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Action parameter to handle the action on other scalars."
+  ::= { zhnSystemGeneralObjects 8 }
+
+sysLocation OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "System location. This object is synonomous with the MIB II system
+      sysLocation object."
+  ::= { zhnSystemGeneralObjects 9 }
+
+sysContact OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "System contact. This object is synonomous with the MIB II system
+      sysContact object."
+  ::= { zhnSystemGeneralObjects 10 }
+
+sysTransmitClockSource OBJECT-TYPE
+  SYNTAX        TCSI
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "T1 Clock source for PWE device. Since both T1/E1 interfaces 
+      will be required to have the same source, this object will 
+      replace the dsx1TransmitClockSource object in the DS1-MIB."
+  ::= { zhnSystemGeneralObjects 11 }
+
+sysLocalTimingReference OBJECT-TYPE
+  SYNTAX        LTRI
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Source of the sysTransmitClockSource when set to Local." 
+  ::= { zhnSystemGeneralObjects 12 }
+
+sysSynchronizationMode OBJECT-TYPE
+  SYNTAX        CSMI
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Determines the method of ensuring Service Clock synchronization
+      between the Source and Remote PWE devices."
+  ::= { zhnSystemGeneralObjects 13 }
+
+sysSynchronousEthernet OBJECT-TYPE
+  SYNTAX        SEI
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Determines whether or not to use the 25MHz clock derived from the 
+      Synchronous Ethernet Port."
+  ::= { zhnSystemGeneralObjects 14 }
+
+sysClockMode OBJECT-TYPE
+  SYNTAX        CMI
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Determines the mode for which the PWE chip will be initialized. "
+  ::= { zhnSystemGeneralObjects 15 }
+
+sysCfgDBAction OBJECT-TYPE
+  SYNTAX        CDA
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Perform an action on the configuration database."
+  ::= { zhnSystemGeneralObjects 16 }
+
+sysSoftwareReboot OBJECT-TYPE
+  SYNTAX        RBT
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION 
+     "Perform a software reboot."
+  ::= { zhnSystemGeneralObjects 17 }
+
+
+
+-- ****************************************************************************
+--
+-- Board Descriptor Table
+--
+numberOfBoards OBJECT-TYPE
+  SYNTAX        Unsigned32(0..4)
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Number of boards in the Unit with Name, Part Number, Serial Number
+     and Revision Number values"
+  ::= { zhnSystemBoardObjects 1}
+
+boardDescriptorTable OBJECT-TYPE
+  SYNTAX        SEQUENCE OF BoardDescriptorEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of boards: Name, Part Number, Serial Number and Revision 
+     Number values"
+  ::= { zhnSystemBoardObjects 2}
+
+boardDescriptorEntry OBJECT-TYPE
+  SYNTAX        BoardDescriptorEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of boards: Name, Part Number, Serial Number and Revision 
+     Number values"
+  INDEX        { boardIndex }
+  ::= { boardDescriptorTable 1}
+
+BoardDescriptorEntry ::=
+  SEQUENCE {
+      boardIndex         Unsigned32,
+      boardName          DisplayString,
+      boardPartNumber    DisplayString,
+      boardSerialNumber  DisplayString,
+      boardRevision      DisplayString
+  }
+
+boardIndex OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Board Index (Zero relative)"
+  ::= { boardDescriptorEntry 1}
+
+boardName OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Name of the Board as created by the system"
+  ::= { boardDescriptorEntry 2}
+
+boardPartNumber OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Part Number of the Board. Read from the board"
+  ::= { boardDescriptorEntry 3}
+
+boardSerialNumber OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Serial Number of the Board. Read from the board"
+  ::= { boardDescriptorEntry 4}
+
+boardRevision OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Revision Number of the Board. Read from the board"
+  ::= { boardDescriptorEntry 5}
+
+
+-- ****************************************************************************
+--
+-- PLD Descriptor Table
+--
+numberOfPlds OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Number of PLDs in the Unit with Name and Version Number values"
+  ::= { zhnSystemPldObjects 1}
+
+pldDescriptorTable OBJECT-TYPE
+  SYNTAX        SEQUENCE OF PldDescriptorEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of boards: Name, Part Number, Serial Number and Revision 
+     Number values"
+  ::= { zhnSystemPldObjects 2}
+
+pldDescriptorEntry OBJECT-TYPE
+  SYNTAX        PldDescriptorEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of boards: Name, Part Number, Serial Number and Revision 
+     Number values"
+  INDEX        { pldIndex }
+  ::= { pldDescriptorTable 1}
+
+PldDescriptorEntry ::=
+  SEQUENCE {
+      pldIndex         Unsigned32,
+      pldName          DisplayString,
+      pldVersion       DisplayString
+  }
+
+pldIndex OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "PLD Index (Zero relative)"
+  ::= { pldDescriptorEntry 1}
+
+pldName OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Name of the PLD as created by the system"
+  ::= { pldDescriptorEntry 2}
+
+pldVersion OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "PLD Software Version. Read from the PLD"
+  ::= { pldDescriptorEntry 3}
+
+
+-- ****************************************************************************
+--
+-- System Radio Objects
+--
+numberOfRadios OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Number of Radios in the Unit"
+  ::= { zhnSystemRadioObjects 1}
+
+
+-- ****************************************************************************
+--
+-- Ethernet-like Interface Table
+--
+numberOfEthernetLikeInterfaces OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    read-write
+  STATUS        current
+  DESCRIPTION
+    "Number of Ethernet Like Interfaces with Name, Type and Subtype"
+  ::= { zhnSystemEthernetLikeObjects 1}
+
+ethernetlikeInterfaceTable OBJECT-TYPE
+  SYNTAX        SEQUENCE OF EthernetlikeInterfaceEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of ethernet-like Interfaces"
+  ::= { zhnSystemEthernetLikeObjects 2}
+
+ethernetlikeInterfaceEntry OBJECT-TYPE
+  SYNTAX        EthernetlikeInterfaceEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of ethernet-like interfaces having Name, type, subtype, number
+     of ports, line power and number of pairs with power"
+  INDEX        { etherIndex }
+  ::= { ethernetlikeInterfaceTable 1}
+
+EthernetlikeInterfaceEntry ::=
+  SEQUENCE {
+      etherIndex           Unsigned32,
+      etherName            DisplayString,
+      etherType            ELTYPE,
+      etherSubtype         ELSUBTYPE,
+      etherNumberOfPorts   Unsigned32,
+      etherLinePower       LPT,
+      etherPowerPairs      Integer32
+  }
+
+etherIndex OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Index of the Ethernet Like Interface (zero relative)"
+  ::= { ethernetlikeInterfaceEntry 1}
+
+etherName OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Name of the ethernet Like Interface as created by the system"
+  ::= { ethernetlikeInterfaceEntry 2}
+
+etherType OBJECT-TYPE
+  SYNTAX        ELTYPE
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Type of Ethernet interface"
+  ::= { ethernetlikeInterfaceEntry 3}
+
+etherSubtype OBJECT-TYPE
+  SYNTAX        ELSUBTYPE
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Subtype of Ethernet interface"
+  ::= { ethernetlikeInterfaceEntry 4}
+
+
+etherNumberOfPorts OBJECT-TYPE
+  SYNTAX        Unsigned32(0..400)
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Number of Ports on the Ethernet interface"
+  ::= { ethernetlikeInterfaceEntry 5}
+
+etherLinePower OBJECT-TYPE
+  SYNTAX        LPT
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Line Power Type on this Ethernet Interface"
+  ::= { ethernetlikeInterfaceEntry 6}
+
+etherPowerPairs OBJECT-TYPE
+  SYNTAX        Integer32
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Number of line Pairs providing power on the Ethernet interface"
+  ::= { ethernetlikeInterfaceEntry 7}
+
+
+-- ****************************************************************************
+--
+-- Temperature Sensor Table
+--
+numberOfTemperatureSensors OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Number of Temperature Sensors in the Unit "
+  ::= { zhnSystemTempSensorObjects 1}
+
+temperatureSensorTable OBJECT-TYPE
+  SYNTAX        SEQUENCE OF TemperatureSensorEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of Temperature Sensors: Name, Maximum, and Minimum values"
+  ::= { zhnSystemTempSensorObjects 2}
+
+temperatureSensorEntry OBJECT-TYPE
+  SYNTAX        TemperatureSensorEntry
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of Temperature Sensors: Name, Maximum, and Minimum values"
+  INDEX        { temperatureSensorIndex  }
+  ::= { temperatureSensorTable 1}
+
+TemperatureSensorEntry ::=
+  SEQUENCE {
+      temperatureSensorIndex      Unsigned32,
+      temperatureSensorName       DisplayString,
+      temperatureSensorMaximum    DisplayString,
+      temperatureSensorMinimum    DisplayString
+  }
+
+temperatureSensorIndex OBJECT-TYPE
+  SYNTAX        Unsigned32(0..20)
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Temperature Sensor Index (Zero relative)"
+  ::= { temperatureSensorEntry 1}
+
+temperatureSensorName OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Name of the ethernet Like Interface as created by the system"
+  ::= { temperatureSensorEntry 2}
+
+temperatureSensorMaximum OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Maximum Temperature Recorded "
+  ::= { temperatureSensorEntry 3}
+
+temperatureSensorMinimum OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Minimum Temperature Recorded "
+  ::= { temperatureSensorEntry 4}
+
+powerSupplyType OBJECT-TYPE
+  SYNTAX        UPT
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Type of Power Supply that the unit is using"
+  ::= { zhnSystemGeneralObjects 5}
+
+
+-- ****************************************************************************
+--
+-- SNMP Commmunity Table
+--
+numberOfCommunities OBJECT-TYPE
+   SYNTAX        Unsigned32(0..9999)
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Number of SNMP Communities configured in the Unit"
+   ::= {zhnSystemSNMPObjects 1 }
+
+zhnCommunityTable OBJECT-TYPE
+   SYNTAX        SEQUENCE OF ZhnCommunityTableEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This table is used to set the various configuration
+                  parameters for a particular community."
+    ::= { zhnSystemSNMPObjects 2 }
+
+zhnCommunityTableEntry OBJECT-TYPE
+   SYNTAX        ZhnCommunityTableEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This object corresponds to an entry in the community table."
+   INDEX         { IMPLIED communityName }
+   ::= { zhnCommunityTable 1 }
+
+ZhnCommunityTableEntry ::=
+   SEQUENCE {
+     communityName      DisplayString,
+     communityType      INTEGER,
+     communityRowStatus RowStatus
+ }
+ 
+communityName OBJECT-TYPE
+   SYNTAX        DisplayString (SIZE(1..32))
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This object corresponds to the SNMP community string."
+ ::= { zhnCommunityTableEntry 1 }
+
+communityType OBJECT-TYPE
+   SYNTAX INTEGER {
+     readOnly (1),
+     readWrite (2)
+   }
+   MAX-ACCESS read-write
+   STATUS current
+   DESCRIPTION
+     "The access type of the community string.
+      The default value of this object should be 
+      read-only(1)."
+ ::= { zhnCommunityTableEntry 2 }
+
+communityRowStatus OBJECT-TYPE
+   SYNTAX RowStatus 
+   MAX-ACCESS read-create
+   STATUS current
+   DESCRIPTION   "When written, this object can be used to createAndGo(4) or 
+                  destroy(6) a row from the table. A rowStatus value
+                  of notInService(2) will also destroy a row. RowStatus
+                  values of active(1), notReady(3), and createAndWait(5)
+                  are ignored."
+   ::= { zhnCommunityTableEntry 3 }
+
+
+-- ****************************************************************************
+--
+-- SNMP Trap Manager Table
+--
+--  Default trap community string object goes here --
+
+numberOfTrapManagers OBJECT-TYPE
+   SYNTAX        Unsigned32(0..9999)
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION   "Number of Trap Managers configured in the Unit"
+   ::= {zhnSystemTrapObjects 1 }
+
+zhnDefaultTrapCommunity OBJECT-TYPE
+   SYNTAX        DisplayString (SIZE(1..32))
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "This object corresponds to the default trap community string.
+                  The default trap community string will be used when a
+                  community name is not configured for a particular trap manager."
+   ::= {zhnSystemTrapObjects 2 }
+
+zhnTrapTypeLinkUpDown OBJECT-TYPE
+   SYNTAX INTEGER {
+                  enable(1),
+                  disable(2)
+   }
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "Enable or disable all link up/down traps."
+   ::= {zhnSystemTrapObjects 3 }
+
+zhnTrapTypeAuthFailure OBJECT-TYPE
+   SYNTAX INTEGER {
+                  enable(1),
+                  disable(2)
+   }
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "Enable or disable the generation of authorization failure traps."
+   ::= {zhnSystemTrapObjects 4 }
+ 
+zhnTrapTypeConfigChange OBJECT-TYPE
+   SYNTAX INTEGER {
+                  enable(1),
+                  disable(2)
+   }
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "Enable or disable the generation of configuration change traps."
+   ::= {zhnSystemTrapObjects 5 }
+ 
+zhnTrapManagerInfoTable OBJECT-TYPE
+   SYNTAX        SEQUENCE OF ZhnTrapManagerInfoTableEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This table is used to set the trap destination address
+                  for a particular community."
+   ::= {zhnSystemTrapObjects 6 }
+ 
+zhnTrapManagerInfoTableEntry OBJECT-TYPE
+   SYNTAX        ZhnTrapManagerInfoTableEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This object corresponds to an entry in the community
+                  trap address info table."
+   INDEX        { IMPLIED trapDestination }
+   ::= { zhnTrapManagerInfoTable 1 }
+ 
+ZhnTrapManagerInfoTableEntry ::=
+   SEQUENCE {
+     trapDestination   IpAddress,
+     zlpTrapCommunityName DisplayString,
+     trapVersion       INTEGER,
+     trapPort          INTEGER,
+     zlpTrapRowStatus     RowStatus
+ }
+ 
+trapDestination OBJECT-TYPE
+   SYNTAX        IpAddress
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "The IP Address of the destination to which a trap
+      		  must be sent."
+   ::= { zhnTrapManagerInfoTableEntry 1 }
+ 
+zlpTrapCommunityName OBJECT-TYPE
+   SYNTAX        DisplayString (SIZE(1..32))
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "This object corresponds to the trap community string.
+                  If not specified, the zlpTrapCommunityName will be set
+                  to the zhnDefaultTrapCommunity object."
+   ::= { zhnTrapManagerInfoTableEntry 2 }
+    
+trapVersion OBJECT-TYPE
+   SYNTAX INTEGER {
+                  v1(1),    -- SNMP V1 Traps
+                  v2c(2)    -- SNMP V2 Traps and Notifications
+   }
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "The trap types automatically supported by net-snmp
+                  and enabled/disabled in snmpd.conf. If not specified, 
+                  the trapVersion will be set the default value of v2c."
+   ::= { zhnTrapManagerInfoTableEntry 3 }
+
+trapPort OBJECT-TYPE
+   SYNTAX        INTEGER
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "The udp/tcp port number to which a trap must be sent.
+                  If not specified, the zlpTrapCommunityName will be set
+                  the default value of 162."
+   ::= { zhnTrapManagerInfoTableEntry 4 }
+ 
+zlpTrapRowStatus OBJECT-TYPE
+   SYNTAX        RowStatus 
+   MAX-ACCESS    read-create
+   STATUS        current
+   DESCRIPTION   "When written, this object can be used to createAndGo(4) or 
+                  destroy(6) a row from the table. A rowStatus value
+                  of notInService(2) will also destroy a row. RowStatus
+                  values of active(1), notReady(3), and createAndWait(5)
+                  are ignored."
+   ::= { zhnTrapManagerInfoTableEntry 5 }
+
+
+
+-- ****************************************************************************
+--
+-- SNMP Fixed Commmunity Table
+--
+-- This table should be used for CPEs that support only two community
+-- strings (i.e. a read-only and a read-write community).
+--
+
+zhnFixedCommunityTable OBJECT-TYPE
+   SYNTAX        SEQUENCE OF ZhnFixedCommunityTableEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This table is used to configure a read-only and a
+                  read-write community."
+    ::= { zhnSystemSNMPObjects 3 }
+
+zhnFixedCommunityTableEntry OBJECT-TYPE
+   SYNTAX        ZhnFixedCommunityTableEntry
+   MAX-ACCESS    not-accessible
+   STATUS        current
+   DESCRIPTION   "This object corresponds to an entry in the fixed community table."
+   INDEX         { IMPLIED communityType }
+   ::= { zhnFixedCommunityTable 1 }
+
+ZhnFixedCommunityTableEntry ::=
+   SEQUENCE {
+     fixedCommunityName      DisplayString,
+     fixedCommunityType      INTEGER,
+     fixedCommunityRowStatus RowStatus
+ }
+ 
+fixedCommunityName OBJECT-TYPE
+   SYNTAX        DisplayString (SIZE(1..32))
+   MAX-ACCESS    read-write
+   STATUS        current
+   DESCRIPTION   "This object corresponds to the SNMP community string."
+ ::= { zhnFixedCommunityTableEntry 1 }
+
+fixedCommunityType OBJECT-TYPE
+   SYNTAX INTEGER {
+     readOnly (1),
+     readWrite (2)
+   }
+   MAX-ACCESS not-accessible
+   STATUS current
+   DESCRIPTION
+     "The access type of the community string.
+      The default value of this object should be 
+      read-only(1)."
+ ::= { zhnFixedCommunityTableEntry 2 }
+
+fixedCommunityRowStatus OBJECT-TYPE
+   SYNTAX RowStatus 
+   MAX-ACCESS read-create
+   STATUS current
+   DESCRIPTION   "When written, this object is ignored. When read, a
+                  value of active(1) or notReady(3) will be returned."
+   ::= { zhnFixedCommunityTableEntry 3 }
+
+
+
+-- ****************************************************************************
+--
+-- Conformance Information
+--
+
+zhnSystemConformance OBJECT IDENTIFIER ::= { zhnSystem 2 }
+
+zhnSystemGroups OBJECT IDENTIFIER ::= { zhnSystemConformance 1}
+zhnSystemCompliances OBJECT IDENTIFIER ::= { zhnSystemConformance 2}
+ 
+--
+-- Compliance Statements
+--
+
+zhnSystemCompliance  MODULE-COMPLIANCE
+  STATUS        current
+  DESCRIPTION
+        "The Compliance statement for SNMP entities which
+         manage display the Zhone System Information"
+  MODULE  -- this module
+  MANDATORY-GROUPS {
+         zhnSystemActiveGroup
+  }
+  GROUP    zhnSystemTablesItems
+  DESCRIPTION " The table item should be filled in for any table
+                with a value of 1 or more.  If the number of items
+                for the table is zero, table will be skipped.
+                However, when the number of item is one or more
+                then all items in that table should be filled in
+                that many times."
+
+  GROUP    zhnSystemConfigItems
+  DESCRIPTION "This group implements support for configurable system objects."
+
+
+  OBJECT modelNumber
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT macBaseAddress
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT numberOfMacAddresses
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT numberOfBoards
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT numberOfPlds
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT numberOfRadios
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT wifiNetworkType
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT numberOfEthernetLikeInterfaces
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT numberOfTemperatureSensors
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  OBJECT powerSupplyType
+  MIN-ACCESS read-only
+  DESCRIPTION
+        "Write access is not required"
+
+  ::= {zhnSystemCompliances 1}
+
+--
+-- Units of Conformance
+--
+
+zhnSystemActiveGroup OBJECT-GROUP
+   OBJECTS {
+       modelNumber,
+       macBaseAddress,
+       numberOfMacAddresses,
+       numberOfBoards,
+       numberOfPlds,
+       numberOfRadios,
+       wifiNetworkType,
+       numberOfEthernetLikeInterfaces,
+       numberOfTemperatureSensors,
+       powerSupplyType
+   }
+   STATUS current
+   DESCRIPTION
+      "A collection of System Information objects that are
+       required for the device to be functional"
+   ::= { zhnSystemGroups 1}
+
+zhnSystemTablesItems OBJECT-GROUP
+   OBJECTS {
+       boardName,
+       boardPartNumber,
+       boardSerialNumber,
+       boardRevision,
+       pldName,
+       pldVersion,
+       etherName,    
+       etherType,          
+       etherSubtype,      
+       etherNumberOfPorts,
+       etherLinePower,   
+       etherPowerPairs,      
+       temperatureSensorName,
+       temperatureSensorMaximum,
+       temperatureSensorMinimum
+   }
+   STATUS current
+   DESCRIPTION
+      "The table items for the device that are filled in
+       when the table is present"
+   ::= { zhnSystemGroups 2}
+
+zhnSystemConfigItems OBJECT-GROUP
+   OBJECTS {
+       locationLatitude,
+       locationLongitude,
+       zhnSystemAction,
+       sysLocation,
+       sysContact,
+       sysTransmitClockSource,
+       sysLocalTimingReference,
+       sysSynchronizationMode,
+       sysSynchronousEthernet
+   }
+   STATUS current
+   DESCRIPTION
+      "The collection of configurable scalar system objects."
+   ::= { zhnSystemGroups 3}
+
+zhnSystemTrapItems OBJECT-GROUP
+   OBJECTS {
+     numberOfTrapManagers,
+     zhnDefaultTrapCommunity,
+     zhnTrapTypeLinkUpDown,
+     zhnTrapTypeAuthFailure,
+     zhnTrapTypeConfigChange,
+     zlpTrapCommunityName,
+     trapVersion,
+     trapPort,
+     zlpTrapRowStatus
+   }
+   STATUS current
+   DESCRIPTION
+      "The collection of SNMP trap objects."
+   ::= { zhnSystemGroups 4}
+
+zhnSystemCommunityItems OBJECT-GROUP
+   OBJECTS {
+     numberOfCommunities,
+     communityType,
+     communityRowStatus
+   }
+   STATUS current
+   DESCRIPTION
+      "The collection of SNMP community objects."
+   ::= { zhnSystemGroups 5}
+
+zhnSystemFixedCommunityItems OBJECT-GROUP
+   OBJECTS {
+     fixedCommunityName,
+     fixedCommunityType,
+     fixedCommunityRowStatus
+   }
+   STATUS current
+   DESCRIPTION
+      "The collection of pre-provisioned SNMP community objects."
+   ::= { zhnSystemGroups 6}
+
+
+END
